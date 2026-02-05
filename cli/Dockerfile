@@ -5,6 +5,8 @@
 #
 # Run (with persistent data volume - recommended):
 #   docker run -d --name conduit -v conduit-data:/home/conduit/data --restart unless-stopped conduit
+# Capacity can be configured with:
+#   -e CONDUIT_MAX_CLIENTS=500 -e CONDUIT_BANDWIDTH_MBPS=400
 #
 # The data volume stores your proxy's private key. The Psiphon broker tracks
 # proxy reputation by key, so preserving it ensures you continue receiving

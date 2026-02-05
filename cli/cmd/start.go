@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/Psiphon-Inc/conduit/cli/internal/conduit"
@@ -39,6 +40,11 @@ var (
 	psiphonConfigPath string
 	statsFilePath     string
 	metricsAddr       string
+)
+
+const (
+	maxClientsEnvVar = "CONDUIT_MAX_CLIENTS"
+	bandwidthEnvVar  = "CONDUIT_BANDWIDTH_MBPS"
 )
 
 var startCmd = &cobra.Command{
@@ -93,22 +99,14 @@ func runStart(cmd *cobra.Command, args []string) error {
 		resolvedStatsFile = filepath.Join(GetDataDir(), resolvedStatsFile)
 	}
 
-	maxClientsFromFlag := 0
-	if cmd.Flags().Changed("max-clients") {
-		if maxClients < 1 {
-			return fmt.Errorf("max-clients must be between 1 and %d", config.MaxClientsLimit)
-		}
-		maxClientsFromFlag = maxClients
+	maxClientsFromFlag, err := resolveMaxClients(cmd)
+	if err != nil {
+		return err
 	}
 
-	bandwidthFromFlag := 0.0
-	bandwidthFromFlagSet := false
-	if cmd.Flags().Changed("bandwidth") {
-		if bandwidthMbps != config.UnlimitedBandwidth && bandwidthMbps < 1 {
-			return fmt.Errorf("bandwidth must be at least 1 Mbps (or -1 for unlimited)")
-		}
-		bandwidthFromFlag = bandwidthMbps
-		bandwidthFromFlagSet = true
+	bandwidthFromFlag, bandwidthFromFlagSet, err := resolveBandwidth(cmd)
+	if err != nil {
+		return err
 	}
 
 	// Load or create configuration (auto-generates keys on first run)
@@ -154,4 +152,49 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	logging.Println("Stopped.")
 	return nil
+}
+
+func resolveMaxClients(cmd *cobra.Command) (int, error) {
+	if cmd.Flags().Changed("max-clients") {
+		if maxClients < 1 || maxClients > config.MaxClientsLimit {
+			return 0, fmt.Errorf("max-clients must be between 1 and %d", config.MaxClientsLimit)
+		}
+		return maxClients, nil
+	}
+
+	maxClientsValue, ok := os.LookupEnv(maxClientsEnvVar)
+	if !ok {
+		return 0, nil
+	}
+
+	parsedMaxClients, err := strconv.Atoi(maxClientsValue)
+	if err != nil || parsedMaxClients < 1 || parsedMaxClients > config.MaxClientsLimit {
+		return 0, fmt.Errorf("%s must be an integer between 1 and %d", maxClientsEnvVar, config.MaxClientsLimit)
+	}
+
+	return parsedMaxClients, nil
+}
+
+func resolveBandwidth(cmd *cobra.Command) (float64, bool, error) {
+	if cmd.Flags().Changed("bandwidth") {
+		if bandwidthMbps != config.UnlimitedBandwidth && bandwidthMbps < 1 {
+			return 0, false, fmt.Errorf("bandwidth must be at least 1 Mbps (or -1 for unlimited)")
+		}
+		return bandwidthMbps, true, nil
+	}
+
+	bandwidthValue, ok := os.LookupEnv(bandwidthEnvVar)
+	if !ok {
+		return 0, false, nil
+	}
+
+	parsedBandwidthMbps, err := strconv.ParseFloat(bandwidthValue, 64)
+	if err != nil {
+		return 0, false, fmt.Errorf("%s must be a number in Mbps (-1 for unlimited)", bandwidthEnvVar)
+	}
+	if parsedBandwidthMbps != config.UnlimitedBandwidth && parsedBandwidthMbps < 1 {
+		return 0, false, fmt.Errorf("%s must be at least 1 Mbps (or -1 for unlimited)", bandwidthEnvVar)
+	}
+
+	return parsedBandwidthMbps, true, nil
 }

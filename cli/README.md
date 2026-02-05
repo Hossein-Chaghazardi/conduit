@@ -24,6 +24,7 @@ The compose file includes:
 - Conduit service (metrics endpoint on `conduit:9090`)
 - Prometheus (`http://localhost:9091`)
 - Grafana (`http://localhost:3000`, default login: `admin` / `conduit`)
+- One config point for capacity limits via `CONDUIT_MAX_CLIENTS` and `CONDUIT_BANDWIDTH_MBPS` in `docker-compose.yml`
 
 Grafana ships with a pre-provisioned dashboard showing:
 - Connected vs connecting clients over time
@@ -75,6 +76,8 @@ conduit start -v
 | `--data-dir, -d`       | `./data` | Directory for keys and state               |
 | `--metrics-addr`       | -        | Prometheus metrics listen address          |
 | `-v`                   | -        | Verbose output                             |
+
+For Docker Compose, set `CONDUIT_MAX_CLIENTS` and `CONDUIT_BANDWIDTH_MBPS` in `docker-compose.yml` (or an env file) instead of passing those flags in `command`.
 
 ## Data Directory
 
