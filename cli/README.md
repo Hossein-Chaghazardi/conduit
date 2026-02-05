@@ -20,7 +20,17 @@ Use the official Docker image, which includes an embedded Psiphon config. Docker
 docker compose up
 ```
 
-The compose file enables Prometheus metrics on `:9090` inside the container. To scrape from the host, publish the port or run Prometheus on the same Docker network and scrape `conduit:9090`.
+The compose file includes:
+- Conduit service (metrics endpoint on `conduit:9090`)
+- Prometheus (`http://localhost:9091`)
+- Grafana (`http://localhost:3000`, default login: `admin` / `conduit`)
+
+Grafana ships with a pre-provisioned dashboard showing:
+- Connected vs connecting clients over time
+- Upload/download bandwidth rates
+- Total transferred bytes
+- Station live status
+- Configured bandwidth limit
 
 ## Building From Source
 
@@ -60,8 +70,8 @@ conduit start -v
 | Flag                   | Default  | Description                                |
 | ---------------------- | -------- | ------------------------------------------ |
 | `--psiphon-config, -c` | -        | Path to Psiphon network configuration file |
-| `--max-clients, -m`    | 50       | Maximum concurrent clients                 |
-| `--bandwidth, -b`      | 40       | Bandwidth limit per peer in Mbps           |
+| `--max-clients, -m`    | 500      | Maximum concurrent clients                 |
+| `--bandwidth, -b`      | 400      | Bandwidth limit per peer in Mbps           |
 | `--data-dir, -d`       | `./data` | Directory for keys and state               |
 | `--metrics-addr`       | -        | Prometheus metrics listen address          |
 | `-v`                   | -        | Verbose output                             |

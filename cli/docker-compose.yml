@@ -7,9 +7,9 @@ services:
             [
                 "start",
                 "--max-clients",
-                "50",
+                "500",
                 "--bandwidth",
-                "50",
+                "400",
                 "--data-dir",
                 "/home/conduit/data",
                 "--metrics-addr",
@@ -19,6 +19,37 @@ services:
         # To scrape from the host, publish the port (e.g., "9090:9090").
         volumes:
             - conduit-data:/home/conduit/data
+    prometheus:
+        image: prom/prometheus:v2.54.1
+        container_name: conduit-prometheus
+        restart: unless-stopped
+        command:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=15d
+        volumes:
+            - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - conduit-prometheus-data:/prometheus
+        ports:
+            - "9091:9090"
+        depends_on:
+            - conduit
+    grafana:
+        image: grafana/grafana:11.2.0
+        container_name: conduit-grafana
+        restart: unless-stopped
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=conduit
+        volumes:
+            - conduit-grafana-data:/var/lib/grafana
+            - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+        ports:
+            - "3000:3000"
+        depends_on:
+            - prometheus
 
 volumes:
     conduit-data:
+    conduit-prometheus-data:
+    conduit-grafana-data:
