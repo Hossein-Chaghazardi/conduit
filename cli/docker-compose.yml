@@ -1,3 +1,6 @@
+x-conduit-max-clients: &conduit_max_clients "1000"
+x-conduit-bandwidth-mbps: &conduit_bandwidth_mbps "400"
+
 services:
     conduit:
         image: ghcr.io/psiphon-inc/conduit/cli:latest
@@ -6,14 +9,18 @@ services:
         command:
             [
                 "start",
+                "--max-clients",
+                *conduit_max_clients,
+                "--bandwidth",
+                *conduit_bandwidth_mbps,
                 "--data-dir",
                 "/home/conduit/data",
                 "--metrics-addr",
                 "0.0.0.0:9090",
             ]
         environment:
-            - CONDUIT_MAX_CLIENTS=1000
-            - CONDUIT_BANDWIDTH_MBPS=400
+            CONDUIT_MAX_CLIENTS: *conduit_max_clients
+            CONDUIT_BANDWIDTH_MBPS: *conduit_bandwidth_mbps
         # Metrics are exposed inside the container on :9090.
         # To scrape from the host, publish the port (e.g., "9090:9090").
         volumes:
