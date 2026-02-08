@@ -33,6 +33,16 @@ Grafana ships with a pre-provisioned dashboard showing:
 - Station live status
 - Configured bandwidth limit
 
+Example hosting option: you can rent a Hetzner.com VPS instance with 20TB monthly traffic for less than $10 and provide service to 1000 clients (pricing and limits can change, so confirm on Hetzner).
+
+To view Grafana on a remote host over SSH, set up local port forwarding:
+
+```bash
+ssh -L 3000:localhost:3000 <user>@<host>
+```
+
+Then open `http://localhost:3000` in your browser.
+
 ## Building From Source
 
 ```bash
